@@ -1,0 +1,15 @@
+Search autocomplete code
+in Javascript with a MySQL/PHP backend
+
+implemented by Konstantin Shahmurov
+
+INSTALLATION:
+
+1. Create a database using your hosting control panel. Write down the database name and the database host (usually "localhost").
+2. Create a database user with password (or chose existing one) and add it to the database with all privileges. Write down user name and password.
+3. Create a folder on the server (using ftp-client program or hosting file manager).
+4. Unpack the attached archive and upload all files from it (including "terms.txt") to this folder.
+5. (temporary) Change folder attributes (permissions) to 777.
+6. Navigate to {your server}/{the folder}/install.php, fill the form, submit it.
+7. If you got "Installation completed" message, change folder attributes back to 755. If not, contact me with error message.
+

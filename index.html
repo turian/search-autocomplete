@@ -1,0 +1,242 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=windows-1250" />
+	<title>Autocomplete</title>
+	<script language="javascript">
+	function getRequester(){
+	  var xmlHttp;
+	  try{
+	    xmlHttp = new XMLHttpRequest();
+	  }catch(e){
+	    var XmlHttpVersions = new Array("MSXML2.XMLHTTP.6.0",
+	                                    "MSXML2.XMLHTTP.5.0",
+	                                    "MSXML2.XMLHTTP.4.0",
+	                                    "MSXML2.XMLHTTP.3.0",
+	                                    "MSXML2.XMLHTTP",
+	                                    "Microsoft.XMLHTTP");
+	    for (var i=0; i < XmlHttpVersions.length && !xmlHttp; i++){
+	      try{
+	        xmlHttp = new ActiveXObject(XmlHttpVersions[i]);
+	      }catch (e) {}
+	    }
+	  }
+	  if (!xmlHttp)
+	    alert("Error creating the XMLHttpRequest object.");
+	  else
+	    return xmlHttp;
+	}
+	
+	var tout=false;
+	var requester=false;
+	var curoption=false;
+	
+	function noshow(e){
+		if(tout){
+			clearTimeout(tout);
+			tout=false;
+		}
+		if(e.keyCode==40||(e.keyCode==9 && !e.shiftKey)){
+			var sl=document.getElementById('sel');
+			if(curoption){
+				if(curoption.nextSibling){
+					curoption.className='';
+					curoption=curoption.nextSibling;
+				}
+			}else{
+				curoption=sl.firstChild;
+			}
+			curoption.className='cur';
+			var inp = document.getElementById('inp');
+			var b = curoption.getElementsByTagName('b')[0];
+			var nob = curoption.firstChild.nodeValue;
+			inp.value=nob+b.firstChild.nodeValue;
+			return false;
+		}else if(e.keyCode==38||(e.keyCode==9 && e.shiftKey)){
+			var sl=document.getElementById('sel');
+			if(curoption){
+				if(curoption.previousSibling){
+					curoption.className='';
+					curoption=curoption.previousSibling;
+				}
+			}else{
+				curoption=sl.childNodes[4];
+			}
+			curoption.className='cur';
+			var inp = document.getElementById('inp');
+			var b = curoption.getElementsByTagName('b')[0];
+			var nob = curoption.firstChild.nodeValue;
+			inp.value=nob+b.firstChild.nodeValue;
+			return false;
+		}
+	}
+	
+	function yesshow(e){
+		if((e.keyCode>47 && e.keyCode<58)||(e.keyCode>64 && e.keyCode<91)||e.keyCode==189||e.keyCode==187||e.keyCode==8||e.keyCode==46||e.keyCode==219||e.keyCode==221||e.keyCode==220||e.keyCode==222||e.keyCode==186||e.keyCode==192||e.keyCode==188||e.keyCode==190||e.keyCode==191||e.keyCode==32){
+			var inp = document.getElementById('inp');
+			if(inp.value.length>0){
+				tout=setTimeout(show,300);
+			}else{
+				var sl=document.getElementById('sel');
+				sl.style.display='none';
+			}
+		}
+	}
+	
+	function send(file){
+		if(!requester){
+			requester=getRequester();
+		}
+		requester.open("get", file, true);
+		requester.onreadystatechange=send_clb;
+		requester.send(null);
+	}
+
+	function send_clb(){
+		if(requester.readyState==4){
+			var nobold,bold,op,b;
+			var sl=document.getElementById('sel');
+			var inp=document.getElementById('inp');
+			var typed=inp.value;
+			var len=typed.length;
+			var resp=requester.responseText;
+			var fl=eval(resp);
+			if(fl){
+				for(i=0; i<fl.length;i++){
+					op=document.createElement('a');
+					nobold=fl[i][0].substr(0,len);
+					bold=fl[i][0].substr(len);
+					b=document.createElement('b');
+					b.appendChild(document.createTextNode(bold));
+					op.appendChild(document.createTextNode(nobold));
+					op.appendChild(b);
+					op.onmouseover=opover;
+					op.href=fl[i][1];
+					sl.appendChild(op);
+				}
+				op.style.borderBottom='1px solid #558BE3';
+				curoption=false;
+				sl.style.display='block';
+			}
+		}
+	}
+	
+	function show(){
+		var op;
+		var sl=document.getElementById('sel');
+		sl.style.display='none';
+		var ops=sl.getElementsByTagName('a');
+		var len=ops.length;
+		for(i=0;i<len;i++){
+			sl.removeChild(ops[0]);
+		}
+		var typed = encodeURIComponent(document.getElementById('inp').value);
+		send('terms.php?t='+typed);
+	}
+	
+	function opover(){
+		if(curoption){
+			curoption.className='';
+		}
+		curoption=this;
+		curoption.className='cur';
+	}
+	
+	function subm(){
+		if(curoption){
+			document.getElementById('frm').action=curoption.getAttribute('href');
+		}else{
+			requester=getRequester();
+			var typed = encodeURIComponent(document.getElementById('inp').value);
+			var file='check.php?t='+typed
+			requester.open("get", file, false);
+			requester.send(null);
+			var resp=requester.responseText;
+			if(resp=='none'){
+				document.getElementById('notexist').style.display='block';
+				setTimeout(hide_notexist,2000);
+				return false;
+			}else{
+				document.getElementById('frm').action=resp;
+			}
+		}
+	}
+	
+	function hide_notexist(){
+		document.getElementById('notexist').style.display='none';
+		var inp=document.getElementById('inp');
+		inp.focus();
+		if(document.all){
+			if (inp.createTextRange) {
+				var r = (inp.createTextRange());
+				r.moveStart('character', (inp.value.length));
+				r.collapse();
+				r.select();
+			}
+		}
+	}
+	</script>
+	
+	<style>
+		body {font-family:verdana}
+		#autocompl {
+			position:relative;
+			border-right: 1px solid #E7E7E7;
+			width:305px;
+			//width:307px;
+		}
+		#inp {
+			border:1px solid #CCCCCC;
+			width:300px;
+			//width:301px;
+			height:1.5em;
+			padding-left:3px;
+		}
+		#sel {
+			position:absolute;
+			top:1.5em;
+			left:0;
+			border:1px solid gray;
+			width:304px;
+			//width:306px;
+			border-top-color:#A4C0F0;
+			border-left-color:#A4C0F0;
+			border-bottom-color:#E7E7E7;
+			border-right-color:#E7E7E7;
+			display:none;
+			margin-top:-1px;
+			//margin-top:0;
+		}
+		#sel a.cur {background-color:#D5E2FF;}
+		#sel a {
+			display:block;
+			border-right:1px solid #558BE3;
+			padding-left:3px;
+			background-color:white;
+			color:black;
+			text-decoration:none;
+		}
+		#sel a b {font-weight:normal;color:darkgray}
+		#notexist{
+			position:absolute;
+			top:-0.7em;
+			left:1em;
+			border:1px solid #A4C0F0;
+			padding:5px;
+			background-color:white;
+			display:none;
+		}
+	</style>
+</head>
+<body>
+	<h1>Autocomplete test</h1>
+	<form action="search.php" id="frm" onsubmit="return(subm())">
+		<div id="autocompl">
+			<input autocomplete="off" onkeydown="return(noshow(event))" onkeyup="yesshow(event)" id="inp">
+			<div id="sel"></div>
+			<div id="notexist">That tag doesn't exist, please select one that does.</div>
+		</div>
+	</form>
+
+</body>
+</html>
